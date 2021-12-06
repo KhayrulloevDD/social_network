@@ -167,7 +167,6 @@ def analytics(request):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @last_request_time_fbv
