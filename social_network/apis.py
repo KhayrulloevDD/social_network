@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import make_password
 from django.http import Http404
 
 from .models import User, Post, Like
-from .serializers import UserSerializer, PostSerializer
+from .serializers import UserSerializer, PostSerializer, LikeSerializer
 from social_network.services.decorators import last_request_time, last_request_time_fbv
 
 
@@ -149,13 +149,23 @@ def user_activity(request, pk):
 def analytics(request):
     date_from = datetime.strptime(request.data['date_from'], "%Y-%m-%d")
     date_to = datetime.strptime(request.data['date_to'], "%Y-%m-%d")
-    delta = timedelta(days=1)
+    like_objects = Like.objects.filter(publish_date__range=[date_from, date_to])
+    serializer = LikeSerializer(like_objects, many=True)
+
+    # create dictionary of days for response with initial 0 values
     response_data = {}
-    while date_from <= date_to:
-        likes_for_this_day = Like.objects.filter(publish_date=date_from).count()
-        response_data[date_from.strftime("%Y-%m-%d")] = likes_for_this_day
-        date_from += delta
+    for item in serializer.data:
+        response_data[item['publish_date']] = 0
+
+    # count likes for each day
+    for response_data_item in response_data:
+        for serializer_data_item in serializer.data:
+            if response_data_item == serializer_data_item['publish_date']:
+                print(serializer_data_item['publish_date'])
+                response_data[response_data_item] += 1
+
     return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])

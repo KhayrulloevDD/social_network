@@ -23,5 +23,5 @@ class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Like
-        fields = ['id', 'user', 'post']
-        depth = 1
+        fields = ['publish_date']
+        # depth = 1
