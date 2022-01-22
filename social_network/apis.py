@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -12,20 +12,17 @@ from django.http import Http404
 
 from .models import User, Post, Like
 from .serializers import UserSerializer, PostSerializer, LikeSerializer
-from social_network.services.decorators import last_request_time, last_request_time_fbv
 
 
 class UserList(APIView):
 
     permission_classes = [IsAdminUser]
 
-    @last_request_time
     def get(self, request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-    @last_request_time
     def post(self, request):
         request.data['password'] = make_password(request.data['password'])
         serializer = UserSerializer(data=request.data)
@@ -45,13 +42,11 @@ class UserDetail(APIView):
         except User.DoesNotExist:
             raise Http404
 
-    @last_request_time
     def get(self, request, pk):
         user = self.get_object(pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
-    @last_request_time
     def put(self, request, pk):
         user = self.get_object(pk)
         request.data['password'] = make_password(request.data['password'])
@@ -61,7 +56,6 @@ class UserDetail(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @last_request_time
     def delete(self, request, pk):
         user = self.get_object(pk)
         user.delete()
@@ -75,13 +69,11 @@ class PostList(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    @last_request_time
     def get(self, request):
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
-    @last_request_time
     def post(self, request):
         request.data['owner'] = request.user.id
         post_serializer = PostSerializer(data=request.data)
@@ -101,13 +93,11 @@ class PostDetail(APIView):
         except Post.DoesNotExist:
             raise Http404
 
-    @last_request_time
     def get(self, request, pk):
         post = self.get_object(pk)
         serializer = PostSerializer(post)
         return Response(serializer.data)
 
-    @last_request_time
     def put(self, request, pk):
         post = self.get_object(pk)
         serializer = PostSerializer(post, data=request.data)
@@ -116,7 +106,6 @@ class PostDetail(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @last_request_time
     def delete(self, request, pk):
         post = self.get_object(pk)
         post.delete()
@@ -128,7 +117,6 @@ class PostDetail(APIView):
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
-@last_request_time_fbv
 def user_activity(request, pk):
     try:
         user = User.objects.get(id=pk)
@@ -145,7 +133,6 @@ def user_activity(request, pk):
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
-@last_request_time_fbv
 def analytics(request):
     date_from = datetime.strptime(request.data['date_from'], "%Y-%m-%d")
     date_to = datetime.strptime(request.data['date_to'], "%Y-%m-%d")
@@ -169,7 +156,6 @@ def analytics(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-@last_request_time_fbv
 def smash_like_button(request, pk):
     user = request.user
     post = Post.objects.get(id=pk)
