@@ -1,14 +1,11 @@
 import json
+import pdb
 
 from django.urls import reverse
-from django.test import Client
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
-from rest_framework.test import force_authenticate
+from rest_framework.test import APITestCase
 
-from social_network.serializers import UserSerializer, PostSerializer, LikeSerializer
-from social_network.models import User, Post, Like
-from social_network.apis import UserList
+from social_network.models import User
 
 
 class TestAPISetUp(APITestCase):
@@ -99,8 +96,8 @@ class TestPostsAPI(TestAPISetUp):
 
     def setUp(self):
         super().setUp()
-        self.posts = reverse("posts")
-        self.post_detail = reverse("post_detail", args=[1])
+        self.post_url = reverse("posts")
+        self.post_detail_url = reverse("post_detail", args=[1])
 
         self.username = "user1"
         self.email = "user1@user1.com"
@@ -111,8 +108,8 @@ class TestPostsAPI(TestAPISetUp):
         self.token = self.client.post(self.get_token_url, {"username": self.username, "password": self.password})
 
         self.valid_post_data = {
-            "title": "user1",
-            "content": "user1"
+            "title": "title#1",
+            "content": "content#1"
         }
 
         self.invalid_user_data = {
@@ -121,24 +118,48 @@ class TestPostsAPI(TestAPISetUp):
         }
 
     def test_post_method_for_valid_post_data(self):
-        pass
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.post(self.post_url, data=json.dumps(self.valid_post_data),
+                                    content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_201_CREATED)
 
     def test_post_method_for_invalid_post_data(self):
-        pass
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.post(self.post_url, data=json.dumps(self.invalid_user_data),
+                                    content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_post(self):
-        pass
+        self.test_post_method_for_valid_post_data()
+        owner = User.objects.get(username=self.username)
+        response = self.client.put(self.post_detail_url, data=json.dumps({
+                "title": "updated title",
+                "content": "updated content",
+                "owner": owner.id,
+            }), content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
 
     def test_get_post(self):
-        pass
+        self.test_post_method_for_valid_post_data()
+        response = self.client.get(self.post_detail_url, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
 
     def test_get_un_existed_post(self):
-        pass
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.get(self.post_detail_url, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_post(self):
-        pass
+        self.test_post_method_for_valid_post_data()
+        response = self.client.delete(self.post_detail_url, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
 
 # self.user_activity = reverse("user_activity", args=[22])
 # self.analytics = reverse("analytics")
 # self.smash_like_button = reverse("smash_like_button", args=[22])
-

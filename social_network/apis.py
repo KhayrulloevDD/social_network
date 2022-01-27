@@ -96,7 +96,7 @@ class PostDetail(APIView):
     def get(self, request, pk):
         post = self.get_object(pk)
         serializer = PostSerializer(post)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
         post = self.get_object(pk)
