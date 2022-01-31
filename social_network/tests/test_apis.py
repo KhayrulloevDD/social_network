@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from social_network.models import User
+from social_network.models import User, Post
 
 
 class TestAPISetUp(APITestCase):
@@ -160,6 +160,54 @@ class TestPostsAPI(TestAPISetUp):
 
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
 
-# self.user_activity = reverse("user_activity", args=[22])
-# self.analytics = reverse("analytics")
-# self.smash_like_button = reverse("smash_like_button", args=[22])
+
+class TestOtherFeatures(TestAPISetUp):
+    def setUp(self):
+        super().setUp()
+        self.user_activity_url_existed_user = reverse("user_activity", args=[1])
+        self.user_activity_url_not_existed_user = reverse("user_activity", args=[7])
+        self.analytics_url = reverse("analytics")
+        self.smash_like_button_url_existed_post = reverse("smash_like_button", args=[1])
+        self.smash_like_button_url_not_existed_post = reverse("smash_like_button", args=[6])
+
+    def test_user_activity_url_with_existed_user(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.get(self.user_activity_url_existed_user, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+
+    def test_user_activity_url_with_not_existed_user(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.get(self.user_activity_url_not_existed_user, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_analytics_url_with_valid_data(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.get(self.analytics_url, {
+            "date_from": "2021-12-25",
+            "date_to": "2022-01-31"
+        })
+
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+
+    def test_analytics_url_with_invalid_data(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.get(self.analytics_url, {
+            "date_from": "",
+        })
+
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_smash_like_button_url_existed_post(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        Post.objects.create(title="title#1", content="content#1", owner_id=1)
+        response = self.client.post(self.smash_like_button_url_existed_post, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_201_CREATED)
+
+    def test_smash_like_button_url_not_existed_post(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
+        response = self.client.post(self.smash_like_button_url_not_existed_post, content_type='application/json')
+
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)

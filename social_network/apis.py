@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -134,8 +135,20 @@ def user_activity(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def analytics(request):
-    date_from = datetime.strptime(request.data['date_from'], "%Y-%m-%d")
-    date_to = datetime.strptime(request.data['date_to'], "%Y-%m-%d")
+    try:
+        date_from = datetime.strptime(request.query_params['date_from'], "%Y-%m-%d")
+        date_to = datetime.strptime(request.query_params['date_to'], "%Y-%m-%d")
+    except MultiValueDictKeyError:
+        return Response({
+            "status": "error",
+            "message": f"missing keys date_from and/or date_to"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except ValueError:
+        return Response({
+            "status": "error",
+            "message": f"invalid value"
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     like_objects = Like.objects.filter(publish_date__range=[date_from, date_to])
     serializer = LikeSerializer(like_objects, many=True)
 
@@ -158,7 +171,13 @@ def analytics(request):
 @permission_classes([IsAuthenticated])
 def smash_like_button(request, pk):
     user = request.user
-    post = Post.objects.get(id=pk)
+    try:
+        post = Post.objects.get(id=pk)
+    except ObjectDoesNotExist:
+        return Response({
+            "status": "error",
+            "message": f"Post with id={pk} does not exists.."
+        }, status=status.HTTP_404_NOT_FOUND)
 
     if Like.objects.filter(user=user, post=post):
         Like.objects.filter(user=user, post=post).delete()
