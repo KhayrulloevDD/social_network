@@ -1,15 +1,17 @@
 from datetime import datetime
 
+from django.db.models import Count
 from django.utils.datastructures import MultiValueDictKeyError
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.hashers import make_password
+from django.http import Http404
+from django.db import transaction
+
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
-
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.hashers import make_password
-from django.http import Http404
 
 from .models import User, Post, Like
 from .serializers import UserSerializer, PostSerializer, LikeSerializer
@@ -141,30 +143,37 @@ def analytics(request):
     except MultiValueDictKeyError:
         return Response({
             "status": "error",
-            "message": f"missing keys date_from and/or date_to"
+            "message": f"missing keys 'date_from' and/or 'date_to'"
         }, status=status.HTTP_400_BAD_REQUEST)
     except ValueError:
         return Response({
             "status": "error",
-            "message": f"invalid value"
+            "message": f"invalid date value"
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    like_objects = Like.objects.filter(publish_date__range=[date_from, date_to])
-    serializer = LikeSerializer(like_objects, many=True)
+    #  likes for each day in a given date range
+    likes = Like.objects.filter(publish_date__range=[date_from, date_to])\
+        .extra(select={'day': 'date(logtime)'}).values('publish_date')\
+        .order_by('-publish_date').annotate(likes=Count('id'))
 
-    # create dictionary of days for response with initial 0 values
-    response_data = {}
-    for item in serializer.data:
-        response_data[item['publish_date']] = 0
+    return Response(likes, status=status.HTTP_200_OK)
 
-    # count likes for each day
-    for response_data_item in response_data:
-        for serializer_data_item in serializer.data:
-            if response_data_item == serializer_data_item['publish_date']:
-                print(serializer_data_item['publish_date'])
-                response_data[response_data_item] += 1
+    # like_objects = Like.objects.filter(publish_date__range=[date_from, date_to])
+    # serializer = LikeSerializer(like_objects, many=True)
+    #
+    # # create dictionary of days for response with initial 0 values
+    # response_data = {}
+    # for item in serializer.data:
+    #     response_data[item['publish_date']] = 0
 
-    return Response(response_data, status=status.HTTP_200_OK)
+    # # count likes for each day
+    # for response_data_item in response_data:
+    #     for serializer_data_item in serializer.data:
+    #         if response_data_item == serializer_data_item['publish_date']:
+    #             print(serializer_data_item['publish_date'])
+    #             response_data[response_data_item] += 1
+    #
+    # return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -179,13 +188,15 @@ def smash_like_button(request, pk):
             "message": f"Post with id={pk} does not exists.."
         }, status=status.HTTP_404_NOT_FOUND)
 
-    if Like.objects.filter(user=user, post=post):
-        Like.objects.filter(user=user, post=post).delete()
+    with transaction.atomic():
+        like = Like.objects.filter(user=user, post=post)
+        if not like:
+            Like.objects.create(user=user, post=post)
+            post.likes = post.likes + 1
+            post.save()
+            return Response({"liked": True}, status=status.HTTP_201_CREATED)
+
+        like.delete()
         post.likes = post.likes - 1
         post.save()
         return Response({"liked": False}, status=status.HTTP_201_CREATED)
-
-    Like.objects.create(user=user, post=post)
-    post.likes = post.likes + 1
-    post.save()
-    return Response({"liked": True}, status=status.HTTP_201_CREATED)

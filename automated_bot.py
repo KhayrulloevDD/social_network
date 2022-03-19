@@ -1,9 +1,11 @@
 import requests
 import random
 
+DOMAIN = "http://127.0.0.1:8000"
+
 
 def get_token(username, password):
-    url = 'http://127.0.0.1:8000/get_token'
+    url = f'{DOMAIN}/get_token'
     credentials = {
         'username': username,
         'password': password,
@@ -13,7 +15,7 @@ def get_token(username, password):
 
 
 def create_user(headers, username, password):
-    url = 'http://127.0.0.1:8000/users'
+    url = f'{DOMAIN}/users'
     data = {
         'username': username,
         'password': password
@@ -23,7 +25,7 @@ def create_user(headers, username, password):
 
 
 def create_post(headers, title, content):
-    url = 'http://127.0.0.1:8000/posts'
+    url = f'{DOMAIN}/posts'
     data = {
         'title': title,
         'content': content
@@ -33,19 +35,19 @@ def create_post(headers, title, content):
 
 
 def get_all_users(headers):
-    url = 'http://127.0.0.1:8000/users'
+    url = f'{DOMAIN}/users'
     response = requests.get(url, headers=headers)
     return response.json()
 
 
 def get_all_posts(headers):
-    url = 'http://127.0.0.1:8000/posts'
+    url = f'{DOMAIN}/posts'
     response = requests.get(url, headers=headers)
     return response.json()
 
 
 def like_post(headers, post_id):
-    url = f'http://127.0.0.1:8000/smash_like_button/{post_id}'
+    url = f'{DOMAIN}/smash_like_button/{post_id}'
     response = requests.post(url, headers=headers)
     return response.json()
 
