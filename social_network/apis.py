@@ -12,6 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, Post, Like
 from .serializers import UserSerializer, PostSerializer, LikeSerializer

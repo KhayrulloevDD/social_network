@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     # side apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_swagger',
+    'drf_yasg',
     # local apps
     'social_network'
 ]
@@ -47,7 +47,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [],
-    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
 ROOT_URLCONF = 'core.urls'
