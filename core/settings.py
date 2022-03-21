@@ -1,7 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'my secret key qwerty, do not judge me'
@@ -24,7 +23,6 @@ INSTALLED_APPS = [
     # side apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'drf_yasg',
     # local apps
     'social_network'
 ]
@@ -46,8 +44,11 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_PERMISSION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
 ROOT_URLCONF = 'core.urls'

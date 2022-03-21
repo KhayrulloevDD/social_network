@@ -10,12 +10,23 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
-from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, Post, Like
 from .serializers import UserSerializer, PostSerializer, LikeSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
 
 
 class UserList(APIView):
@@ -158,23 +169,6 @@ def analytics(request):
         .order_by('-publish_date').annotate(likes=Count('id'))
 
     return Response(likes, status=status.HTTP_200_OK)
-
-    # like_objects = Like.objects.filter(publish_date__range=[date_from, date_to])
-    # serializer = LikeSerializer(like_objects, many=True)
-    #
-    # # create dictionary of days for response with initial 0 values
-    # response_data = {}
-    # for item in serializer.data:
-    #     response_data[item['publish_date']] = 0
-
-    # # count likes for each day
-    # for response_data_item in response_data:
-    #     for serializer_data_item in serializer.data:
-    #         if response_data_item == serializer_data_item['publish_date']:
-    #             print(serializer_data_item['publish_date'])
-    #             response_data[response_data_item] += 1
-    #
-    # return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

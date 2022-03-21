@@ -58,7 +58,7 @@ class TestUsersAPI(TestAPISetUp):
         response = self.client.post(self.users_url, data=json.dumps(self.valid_user_data),
                                     content_type='application/json')
         self.assertEquals(response.status_code, status.HTTP_201_CREATED)
-
+#
     def test_post_invalid_user(self):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.data['access'])
         response = self.client.post(self.users_url, data=json.dumps(self.invalid_user_data),
