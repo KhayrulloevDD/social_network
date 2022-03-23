@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password
 from django.http import Http404
 from django.db import transaction
 
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -17,10 +18,17 @@ from .models import User, Post, Like
 from .serializers import UserSerializer, PostSerializer, LikeSerializer
 
 
+class UserPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+    pagination_class = UserPagination
 
 
 class PostViewSet(viewsets.ModelViewSet):
