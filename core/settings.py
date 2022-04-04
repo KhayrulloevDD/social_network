@@ -7,7 +7,7 @@ SECRET_KEY = 'my secret key qwerty, do not judge me'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
