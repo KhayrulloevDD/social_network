@@ -1,14 +1,19 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+import environ
+
+
+env = environ.Env()
+environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'my secret key qwerty, do not judge me'
+SECRET_KEY = env("SECRET_KEY", default="unsafe secret key qwerty")
 
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [env("ALLOWED_HOSTS")]
 
 
 # Application definition
